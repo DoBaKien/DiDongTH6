@@ -10,13 +10,22 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import Task from "./Task";
+import axios from "axios";
 
 export default function App() {
   const [value, setValue] = useState("");
   const [todos, setTodos] = useState([]);
+
   const handleAddTodo = () => {
     if (value.length > 0) {
       setTodos([...todos, { text: value, key: Date.now(), checked: false }]);
+      axios
+        .post("https://633ec50a0dbc3309f3bcca92.mockapi.io/app/list/todo", {
+          name: value,
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
       setValue("");
     }
   };
@@ -35,7 +44,7 @@ export default function App() {
       })
     );
   };
-  const handleCheckedP= (id) => {
+  const handleCheckedP = (id) => {
     setPosts(
       posts.map((todo) => {
         if (todo.id === id) todo.checked = !todo.checked;
@@ -46,7 +55,7 @@ export default function App() {
 
   const [posts, setPosts] = useState([]);
   useEffect(() => {
-    fetch("https://jsonplaceholder.typicode.com/todos")
+    fetch("https://633ec50a0dbc3309f3bcca92.mockapi.io/app/list/todo")
       .then((res) => res.json())
       .then((posts) => {
         setPosts(posts);
@@ -59,7 +68,7 @@ export default function App() {
           {posts.map((post) => (
             <Task
               key={post.id}
-              text={post.title}
+              text={post.name}
               checked={post.checked} // toggle the checked icon
               setChecked={() => handleCheckedP(post.id)}
             />
