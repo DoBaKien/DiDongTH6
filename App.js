@@ -18,7 +18,7 @@ export default function App() {
 
   const handleAddTodo = () => {
     if (value.length > 0) {
-      setTodos([...todos, { text: value, key: Date.now(), checked: false }]);
+      setTodos([...todos, { name: value, id: Date.now(), checked: false }]);
       axios
         .post("https://633ec50a0dbc3309f3bcca92.mockapi.io/app/list/todo", {
           name: value,
@@ -29,12 +29,16 @@ export default function App() {
       setValue("");
     }
   };
-  const handleDeleteTodo = (id) => {
-    setTodos(
-      todos.filter((todo) => {
-        if (todo.key !== id) return true;
-      })
-    );
+  const handleDeleteTodo = async(id) => {
+    // console.log("asd");
+    // setTodos(
+    //   todos.filter((todo) => {
+    //     if (todo.key !== id) return true;
+    //   })
+    // );
+    console.log("Xoa thành công");
+    await fetch(`https://633ec50a0dbc3309f3bcca92.mockapi.io/app/list/todo/${id}`, { method: "DELETE" });
+    setTodos(todos.filter((todo) => todo.id !== id));
   };
   const handleChecked = (id) => {
     setTodos(
@@ -44,37 +48,45 @@ export default function App() {
       })
     );
   };
-  const handleCheckedP = (id) => {
-    setPosts(
-      posts.map((todo) => {
-        if (todo.id === id) todo.checked = !todo.checked;
-        return todo;
-      })
-    );
-  };
+  // const handleCheckedP = (id) => {
+  //   setPosts(
+  //     posts.map((todo) => {
+  //       if (todo.id === id) todo.checked = !todo.checked;
+  //       return todo;
+  //     })
+  //   );
+  // };
 
-  const [posts, setPosts] = useState([]);
+  // const [posts, setPosts] = useState([]);
   useEffect(() => {
     fetch("https://633ec50a0dbc3309f3bcca92.mockapi.io/app/list/todo")
       .then((res) => res.json())
-      .then((posts) => {
-        setPosts(posts);
+      .then((todo) => {
+        setTodos(todo);
       });
   }, []);
   return (
     <View style={styles.container}>
       <View style={{ flex: 6 }}>
         <ScrollView style={{ width: "100%" }}>
-          {posts.map((post) => (
+          {/* {posts.map((post) => (
             <Task
               key={post.id}
               text={post.name}
               checked={post.checked} // toggle the checked icon
               setChecked={() => handleCheckedP(post.id)}
             />
-          ))}
-
+          ))} */}
           {todos.map((task) => (
+            <Task
+              text={task.name}
+              key={task.id}
+              checked={task.checked}
+              setChecked={() => handleChecked(task.id)}
+              delete={() => handleDeleteTodo(task.id)}
+            />
+          ))}
+          {/* {todos.map((task) => (
             <Task
               text={task.text}
               key={task.key}
@@ -82,7 +94,7 @@ export default function App() {
               setChecked={() => handleChecked(task.key)}
               delete={() => handleDeleteTodo(task.key)}
             />
-          ))}
+          ))} */}
         </ScrollView>
       </View>
       <View style={styles.header}>
