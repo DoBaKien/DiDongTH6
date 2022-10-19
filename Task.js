@@ -1,5 +1,5 @@
 import React from "react";
-import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Image } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
 const Task = (props) => (
   <View style={styles.taskWrapper}>
@@ -10,12 +10,27 @@ const Task = (props) => (
       style={{ marginLeft: 15 }}
       onPress={props.setChecked}
     />
-
     <View>
-      {/* if the task is checked toggle a vertical line on top of task */}
+      <Image source={{ uri: props.text2 }} style={{ width: 50, height: 50 }} />
+    </View>
+    <View
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
       {props.checked && <View style={styles.verticalLine}></View>}
       <Text style={styles.task}>{props.text}</Text>
     </View>
+
+    <Icon
+      name="edit"
+      size={30}
+      color="#900"
+      style={{ marginLeft:"auto"}}
+      onPress={props.edit}
+    />
 
     <Icon
       name="trash-2"
@@ -42,8 +57,7 @@ const styles = StyleSheet.create({
   task: {
     paddingBottom: 20,
     paddingLeft: 10,
-    marginRight: 70,
-    marginTop: 6,
+    marginTop: 2,
     borderColor: "#F0F0F0",
     borderBottomWidth: 1,
     fontSize: 17,

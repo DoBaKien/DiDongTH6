@@ -7,14 +7,20 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  Image,
+  Alert,
+  Button,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import Task from "./Task";
 import axios from "axios";
+import Icon from "react-native-vector-icons/Feather";
+import * as ImagePicker from "expo-image-picker";
 
 export default function App() {
   const [value, setValue] = useState("");
   const [todos, setTodos] = useState([]);
+  const [image, setImage] = useState(null);
 
   const handleAddTodo = () => {
     if (value.length > 0) {
@@ -24,40 +30,44 @@ export default function App() {
           name: value,
         })
         .catch(function (error) {
-          console.log(error);
+          console.log("err   " + error);
         });
       setValue("");
     }
   };
-  const handleDeleteTodo = async(id) => {
-    // console.log("asd");
-    // setTodos(
-    //   todos.filter((todo) => {
-    //     if (todo.key !== id) return true;
-    //   })
-    // );
+  const handleDeleteTodo = async (id) => {
     console.log("Xoa thành công");
-    await fetch(`https://633ec50a0dbc3309f3bcca92.mockapi.io/app/list/todo/${id}`, { method: "DELETE" });
+    await fetch(
+      `https://633ec50a0dbc3309f3bcca92.mockapi.io/app/list/todo/${id}`,
+      { method: "DELETE" }
+    );
     setTodos(todos.filter((todo) => todo.id !== id));
   };
+
+  const handleEdit = (id) => {
+    axios
+      .put(`https://633ec50a0dbc3309f3bcca92.mockapi.io/app/list/todo/${id}`, {
+        id: id,
+        name: value,
+      })
+      .then((res) => {
+        fetch("https://633ec50a0dbc3309f3bcca92.mockapi.io/app/list/todo")
+          .then((res) => res.json())
+          .then((todo) => {
+            setTodos(todo);
+          });
+      });
+  };
+
   const handleChecked = (id) => {
     setTodos(
       todos.map((todo) => {
-        if (todo.key === id) todo.checked = !todo.checked;
+        if (todo.id === id) todo.checked = !todo.checked;
         return todo;
       })
     );
   };
-  // const handleCheckedP = (id) => {
-  //   setPosts(
-  //     posts.map((todo) => {
-  //       if (todo.id === id) todo.checked = !todo.checked;
-  //       return todo;
-  //     })
-  //   );
-  // };
 
-  // const [posts, setPosts] = useState([]);
   useEffect(() => {
     fetch("https://633ec50a0dbc3309f3bcca92.mockapi.io/app/list/todo")
       .then((res) => res.json())
@@ -65,38 +75,82 @@ export default function App() {
         setTodos(todo);
       });
   }, []);
+
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+    if (!result.cancelled) {
+      setImage(result.uri);
+      // handleUpdata(result);
+      const uri = result.uri;
+      const type = "image/jpg";
+      const name = Date.now();
+      const source = { uri, type, name };
+
+      handleUpdata(source);
+    }
+  };
+
+  const handleUpdata = (photo) => {
+    const data = new FormData();
+    data.append("file", photo);
+    data.append("upload_preset", "DemoTodoApp");
+    data.append("cloud_name", "dvuoju1qg");
+    console.log(data.file);
+    fetch("https://api-us.cloudinary.com/v1_1/dvuoju1qg/image/upload", {
+      method: "POST",
+      body: data,
+      // headers: {
+      //   Accept: "application/json",
+      //   "Content-Type": "multipart/form-data",
+      // },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+      })
+      .catch((err) => {
+        Alert.alert("Error While Uploading" + err);
+      });
+  };
+  const handleDelImg = () => {
+    setImage('')
+  };
+
   return (
     <View style={styles.container}>
       <View style={{ flex: 6 }}>
         <ScrollView style={{ width: "100%" }}>
-          {/* {posts.map((post) => (
-            <Task
-              key={post.id}
-              text={post.name}
-              checked={post.checked} // toggle the checked icon
-              setChecked={() => handleCheckedP(post.id)}
-            />
-          ))} */}
           {todos.map((task) => (
             <Task
               text={task.name}
+              text2={task.image}
               key={task.id}
               checked={task.checked}
               setChecked={() => handleChecked(task.id)}
               delete={() => handleDeleteTodo(task.id)}
+              edit={() => handleEdit(task.id)}
             />
           ))}
-          {/* {todos.map((task) => (
-            <Task
-              text={task.text}
-              key={task.key}
-              checked={task.checked} // toggle the checked icon
-              setChecked={() => handleChecked(task.key)}
-              delete={() => handleDeleteTodo(task.key)}
-            />
-          ))} */}
         </ScrollView>
       </View>
+
+      {image && (
+        <View style={{ flex: 1 }} flexDirection="row">
+          <Image
+            source={{ uri: image }}
+            style={{ width: 200, height: "100%" }}
+          />
+          <TouchableOpacity style={styles.buttondel} onPress={handleDelImg}>
+            <Text>X</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <View style={styles.header}>
         <SafeAreaView>
           <TextInput
@@ -108,6 +162,15 @@ export default function App() {
         <TouchableOpacity style={styles.button} onPress={() => handleAddTodo()}>
           <Text style={styles.text}>+</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.button}>
+          <Icon
+            name="camera"
+            size={30}
+            color="#900"
+            style={[styles.text, { paddingTop: 7 }]}
+            onPress={pickImage}
+          />
+        </TouchableOpacity>
       </View>
       <StatusBar style="auto" />
     </View>
@@ -115,6 +178,12 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  buttondel: {
+    backgroundColor: "#DDDDDD",
+    padding:5,
+    width: 20,
+    height: 30,
+  },
   text: {
     fontSize: 40,
     backgroundColor: "black",
@@ -127,6 +196,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flex: 1,
+    backgroundColor: "lightgray",
     alignItems: "center",
     flexDirection: "row",
   },
@@ -135,7 +205,7 @@ const styles = StyleSheet.create({
     margin: 12,
     borderWidth: 1,
     padding: 10,
-    width: 300,
+    width: 280,
     fontSize: 20,
   },
   container: {
