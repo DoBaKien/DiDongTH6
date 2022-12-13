@@ -9,7 +9,7 @@ import {
   ScrollView,
   Image,
   Alert,
-  Button,
+
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import Task from "./Task";
@@ -21,13 +21,25 @@ export default function App() {
   const [value, setValue] = useState("");
   const [todos, setTodos] = useState([]);
   const [image, setImage] = useState(null);
-
+  const [imagel, setImagel] = useState(null);
+  const [image2, setImage2] = useState(null);
   const handleAddTodo = () => {
-    if (value.length > 0) {
+    if (value.length > -1) {
+      handleUpdata(imagel);
       setTodos([...todos, { name: value, id: Date.now(), checked: false }]);
       axios
         .post("https://633ec50a0dbc3309f3bcca92.mockapi.io/app/list/todo", {
           name: value,
+          image: image2
+        })
+        .then(function (response) {
+          axios.get('https://633ec50a0dbc3309f3bcca92.mockapi.io/app/list/todo')
+            .then(function (response) {
+              setTodos(response.data);
+            })
+            .catch(function (error) {
+              console.log(error);
+            });
         })
         .catch(function (error) {
           console.log("err   " + error);
@@ -76,51 +88,46 @@ export default function App() {
       });
   }, []);
 
+
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [4, 3],
       quality: 1,
     });
     if (!result.cancelled) {
       setImage(result.uri);
-      // handleUpdata(result);
-      const uri = result.uri;
-      const type = "image/jpg";
-      const name = Date.now();
-      const source = { uri, type, name };
-
-      handleUpdata(source);
+      setImagel(result)
+    } else {
+      alert("ko load dc anh ");
     }
   };
 
   const handleUpdata = (photo) => {
+    let image = {
+      uri: photo.uri,
+      type: `test/${photo.uri.split(".")[1]}`,
+      name: `test.${photo.uri.split(".")[1]}`,
+    };
     const data = new FormData();
-    data.append("file", photo);
+    data.append("file", image);
     data.append("upload_preset", "DemoTodoApp");
     data.append("cloud_name", "dvuoju1qg");
-    console.log(data.file);
-    fetch("https://api-us.cloudinary.com/v1_1/dvuoju1qg/image/upload", {
-      method: "POST",
+    fetch("https://api.cloudinary.com/v1_1/dvuoju1qg/image/upload", {
+      method: "post",
       body: data,
-      // headers: {
-      //   Accept: "application/json",
-      //   "Content-Type": "multipart/form-data",
-      // },
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
+
+        setImage2(data.secure_url)
       })
       .catch((err) => {
         Alert.alert("Error While Uploading" + err);
       });
   };
   const handleDelImg = () => {
-    setImage('')
+    setImage("");
   };
-
   return (
     <View style={styles.container}>
       <View style={{ flex: 6 }}>
@@ -143,7 +150,7 @@ export default function App() {
         <View style={{ flex: 1 }} flexDirection="row">
           <Image
             source={{ uri: image }}
-            style={{ width: 200, height: "100%" }}
+            style={{ width: 200, height: "100%", resizeMode: "contain" }}
           />
           <TouchableOpacity style={styles.buttondel} onPress={handleDelImg}>
             <Text>X</Text>
@@ -180,7 +187,7 @@ export default function App() {
 const styles = StyleSheet.create({
   buttondel: {
     backgroundColor: "#DDDDDD",
-    padding:5,
+    padding: 5,
     width: 20,
     height: 30,
   },
